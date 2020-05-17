@@ -1,0 +1,36 @@
+{
+  "name": "my_project",
+  "author": "James Batt<place.net.au@gmail.com>",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "core-js": "^3.6.4",
+    "react": "^16.13.0",
+    "react-dom": "^16.13.0",
+    "wails-react-scripts": "3.0.1-2",
+    "react-modal": "3.11.2",
+    "@wailsapp/runtime": "^1.0.10"
+  },
+  "scripts": {
+    "start": "npm run build",
+    "build": "esbuild src/index.tsx --bundle --target=es2016 --outfile=build/static/js/main.js --define:process.env.NODE_ENV='development'"
+  },
+  "eslintConfig": {
+    "extends": "react-app"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "esbuild": "0.3.3"
+  }
+}
