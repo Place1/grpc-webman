@@ -1,7 +1,7 @@
 package main
 
 import (
-	"my-project/internal/backend"
+	"grpcwebman/internal/backend"
 
 	"github.com/leaanthony/mewn"
 	"github.com/wailsapp/wails"

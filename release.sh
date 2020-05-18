@@ -36,10 +36,10 @@ github-release release \
 
 echo "uploading artifacts"
 ARTIFACTS=(
-  "grpc-webman-darwin-amd64.app.tar.gz"
-  "grpc-webman-darwin-10.6-amd64"
-  "grpc-webman-linux-amd64"
-  "grpc-webman-windows-4.0-amd64.exe"
+  "grpcwebman-darwin-amd64.app.tar.gz"
+  "grpcwebman-darwin-10.6-amd64"
+  "grpcwebman-linux-amd64"
+  "grpcwebman-windows-4.0-amd64.exe"
 )
 for ARTIFACT in "${ARTIFACTS[@]}"; do
   echo "uploading: $ARTIFACT"

@@ -2,9 +2,9 @@ package backend
 
 import (
 	"context"
+	"grpcwebman/internal/grpcweb"
 	"io"
 	"io/ioutil"
-	"my-project/internal/grpcweb"
 	"strings"
 
 	"github.com/golang/protobuf/jsonpb"

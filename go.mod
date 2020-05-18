@@ -1,4 +1,4 @@
-module my-project
+module grpcwebman
 
 go 1.14
 
