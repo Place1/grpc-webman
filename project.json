@@ -1,12 +1,12 @@
 {
- "name": "My Project",
+ "name": "GRPCWebman",
  "description": "Enter your project description",
  "author": {
   "name": "James Batt",
   "email": "place.net.au@gmail.com"
  },
  "version": "0.1.0",
- "binaryname": "my-project",
+ "binaryname": "grpc-webman",
  "frontend": {
   "dir": "frontend",
   "install": "npm install",
