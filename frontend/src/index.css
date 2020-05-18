@@ -1,0 +1,11 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+.hover-tint:hover {
+  background: linear-gradient(to bottom, #FAFBFB, #EAECEE);
+}
