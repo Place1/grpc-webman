@@ -6,6 +6,7 @@ import { domain } from '../backend';
 import { CollectionModel } from '../storage/models';
 import { workspaces } from '../storage/stores';
 import { EditableHeading } from './kit/editable-heading';
+import { ErrorCallout } from './kit/error-callout';
 
 interface Props {
   id: string;
@@ -31,7 +32,7 @@ export class Workspace extends React.Component<Props> {
     try {
       this.error = undefined;
       this.responseJSON = await domain.InvokeRPC(
-        this.props.collection.protofile || "",
+        this.props.collection.files![0].content || "",
         this.workspace.server || "",
         this.workspace.selectedRPC || "",
         this.workspace.requestJSON || "",
@@ -76,6 +77,7 @@ export class Workspace extends React.Component<Props> {
                 appearance="primary"
                 marginLeft={12}
                 onClick={this.invokeRPC}
+                iconAfter="direction-right"
               >
                 Send
               </Button>
@@ -104,12 +106,7 @@ export class Workspace extends React.Component<Props> {
                     />
                   }
                   {this.error &&
-                    <Alert
-                      intent="danger"
-                      title="Error"
-                    >
-                      <pre>{String(this.error).replace(/:\s/g, '\n→ ')}</pre>
-                    </Alert>
+                    <ErrorCallout error={this.error} />
                   }
               </FormField>
             </Pane>

@@ -1,15 +1,15 @@
-import * as Wails from '@wailsapp/runtime';
+import './index.css';
 import 'core-js/stable';
-import { Alert, Spinner, defaultTheme } from 'evergreen-ui';
-import { observer } from 'mobx-react';
-import { fromPromise } from 'mobx-utils';
 import React from 'react';
 import ReactDOM from 'react-dom';
+import * as Wails from '@wailsapp/runtime';
+import { Alert } from 'evergreen-ui';
+import { observer } from 'mobx-react';
+import { fromPromise } from 'mobx-utils';
+import { Spring } from 'react-spring/renderprops';
 import { Backend, setBackend } from './backend';
 import { App } from './components/app';
-import './index.css';
 import { app, collections, workspaces } from './storage/stores';
-import { Spring } from 'react-spring/renderprops';
 
 @observer
 class Root extends React.Component {
@@ -19,6 +19,8 @@ class Root extends React.Component {
     collections.load(),
     workspaces.load(),
   ]));
+
+  // TODO: error boundary to catch local data corruption
 
   render() {
     return this.ready.case({

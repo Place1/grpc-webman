@@ -8,6 +8,7 @@ require (
 	github.com/golang/protobuf v1.4.2
 	github.com/jhump/protoreflect v1.6.1
 	github.com/leaanthony/mewn v0.10.7
+	github.com/mitchellh/mapstructure v1.1.2
 	github.com/pkg/errors v0.8.1
 	github.com/wailsapp/wails v1.5.0
 	grpc.go4.org v0.0.0-20170609214715-11d0a25b4919

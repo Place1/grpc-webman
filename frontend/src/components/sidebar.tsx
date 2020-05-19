@@ -11,6 +11,7 @@ export class Sidebar extends React.Component {
   addCollection = () => {
     const c = collections.create({
       name: 'Untitled',
+      files: [],
     });
 
     workspaces.create({

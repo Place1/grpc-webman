@@ -1,13 +1,14 @@
-import { FilePicker, FormField, IconButton, Pane, Tab, Tablist } from 'evergreen-ui';
-import { computed } from 'mobx';
+import { FilePicker, FormField, IconButton, Pane, Tab, Tablist, Button, SideSheet, Heading, Table, Popover, Menu } from 'evergreen-ui';
+import { computed, observable, toJS } from 'mobx';
 import { observer } from 'mobx-react';
 import React from 'react';
 import { domain } from '../backend';
 import { collections, workspaces } from '../storage/stores';
 import { Workspace } from './workspace';
 import { promisedComputed } from 'computed-async-mobx';
-import { WorkspaceModel } from '../storage/models';
+import { WorkspaceModel, FileModel } from '../storage/models';
 import { EditableHeading } from './kit/editable-heading';
+import { ErrorCallout } from './kit/error-callout';
 
 interface Props {
   id: string;
@@ -15,6 +16,12 @@ interface Props {
 
 @observer
 export class Collection extends React.Component<Props> {
+
+  @observable
+  showFiles = false;
+
+  @observable
+  error?: Error;
 
   @computed
   get collection() {
@@ -40,16 +47,28 @@ export class Collection extends React.Component<Props> {
   }
 
   methods = promisedComputed([], async () => {
-    if (!this.collection.protofile) {
+    if (!this.collection.files || this.collection.files.length === 0) {
       return [];
     }
-    return await domain.ListMethods(this.collection.protofile);
+    try {
+      return await domain.ListMethods(toJS(this.collection.files) as any);
+    }
+    catch (error) {
+      this.error = error;
+      return [];
+    }
   });
 
   onProtoFiles = async (files: File[]) => {
-    // @ts-ignore
-    const protofile = await files[0].text();
-    this.collection.protofile = protofile;
+    const models = files.map(async (f): Promise<FileModel> => ({
+      name: f.name,
+      // @ts-ignore
+      content: await f.text(),
+    }));
+    this.collection.files = [
+      ...this.collection.files,
+      ...await Promise.all(models),
+    ];
   }
 
   createTab = () => {
@@ -71,24 +90,74 @@ export class Collection extends React.Component<Props> {
     }
   }
 
+  removeFile = (f: FileModel) => {
+    this.collection.files = this.collection.files.filter(file => file !== f);
+  }
+
   render() {
     return (
       <div>
-        <Pane marginBottom={36}>
+        <Pane display="flex" alignItems="center" justifyContent="space-between" marginBottom={36}>
           <EditableHeading
             size={800}
             value={this.collection.name}
             onChange={value => this.collection.name = value}
           />
+
+          {this.collection.files.length !== 0 &&
+            <Pane background="tint1" padding={12}>
+              <Button iconBefore="folder-open" appearance="minimal" onClick={() => this.showFiles = true}>
+                Files
+              </Button>
+            </Pane>
+          }
         </Pane>
 
-        {!this.collection.protofile &&
+        {this.error &&
+          <ErrorCallout error={this.error} />
+        }
+
+        {this.collection.files.length === 0 &&
           <FormField label="Proto File(s)">
             <FilePicker width={350} onChange={this.onProtoFiles} />
           </FormField>
         }
 
-        {this.collection.protofile &&
+        <SideSheet
+          isShown={this.showFiles}
+          onCloseComplete={() => this.showFiles = false}
+        >
+          <Pane padding={16} borderBottom="muted">
+            <Heading size={600}>Protobuf Files</Heading>
+          </Pane>
+          <Pane padding={16} borderBottom="muted">
+            <FormField label="Add Proto File(s)">
+              <FilePicker width={350} onChange={this.onProtoFiles} />
+            </FormField>
+          </Pane>
+          <Pane padding={16}>
+            {this.collection.files.map((f, i) => (
+              <Table.Row key={i}>
+                <Table.TextCell>{f.name}</Table.TextCell>
+                <Table.Cell display="flex" justifyContent="flex-end">
+                  <Popover
+                    content={
+                      <Menu>
+                        <Menu.Group>
+                          <Menu.Item intent="danger" onSelect={() => this.removeFile(f)}>Delete</Menu.Item>
+                        </Menu.Group>
+                      </Menu>
+                    }
+                  >
+                    <IconButton icon="more" appearance="minimal" />
+                  </Popover>
+                </Table.Cell>
+              </Table.Row>
+            ))}
+          </Pane>
+        </SideSheet>
+
+        {this.collection.files.length > 0 &&
           <>
             <Pane display="flex" background="tint1" marginBottom={12}>
               <Tablist>

@@ -8,7 +8,7 @@ export interface AppModel {
 
 export interface CollectionModel extends Model {
   name: string;
-  protofile?: string;
+  files: FileModel[];
   activeWorkspace?: string;
 }
 
@@ -18,4 +18,9 @@ export interface WorkspaceModel extends Model {
   server?: string;
   selectedRPC?: string;
   requestJSON?: string;
+}
+
+export interface FileModel {
+  name: string;
+  content: string;
 }

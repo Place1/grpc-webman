@@ -2,6 +2,7 @@ package backend
 
 import (
 	"context"
+	"fmt"
 	"grpcwebman/internal/grpcweb"
 	"io"
 	"io/ioutil"
@@ -11,17 +12,31 @@ import (
 	"github.com/jhump/protoreflect/desc"
 	"github.com/jhump/protoreflect/desc/protoparse"
 	"github.com/jhump/protoreflect/dynamic"
+	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
+	"github.com/wailsapp/wails"
 )
 
-type Domain struct{}
+type Domain struct {
+	runtime *wails.Runtime
+}
 
 func NewDomain() *Domain {
 	return &Domain{}
 }
 
-func (d *Domain) ListMethods(protofile string) ([]string, error) {
-	methodDescriptors, err := listMethods(protofile)
+func (d *Domain) WailsInit(runtime *wails.Runtime) error {
+	d.runtime = runtime
+	return nil
+}
+
+func (d *Domain) ListMethods(files []interface{}) ([]string, error) {
+	protofiles := []*FileModel{}
+	if err := mapstructure.Decode(files, &protofiles); err != nil {
+		return nil, errors.Wrap(err, "invalid argument")
+	}
+
+	methodDescriptors, err := listMethods(protofiles)
 	if err != nil {
 		return nil, err
 	}
@@ -34,8 +49,13 @@ func (d *Domain) ListMethods(protofile string) ([]string, error) {
 	return methods, nil
 }
 
-func (d *Domain) InvokeRPC(protofile string, server string, method string, data string) (string, error) {
-	methods, err := listMethods(protofile)
+func (d *Domain) InvokeRPC(files []interface{}, server string, method string, data string) (string, error) {
+	protofiles := []*FileModel{}
+	if err := mapstructure.Decode(files, &protofiles); err != nil {
+		return "", errors.Wrap(err, "invalid argument")
+	}
+
+	methods, err := listMethods(protofiles)
 	if err != nil {
 		return "", err
 	}
@@ -70,20 +90,34 @@ func (d *Domain) InvokeRPC(protofile string, server string, method string, data 
 	return "", errors.New("unknown GRPC method")
 }
 
-func listMethods(protofile string) ([]*desc.MethodDescriptor, error) {
-	if protofile == "" {
-		return nil, errors.New("select a proto file first")
+func listMethods(protofiles []*FileModel) ([]*desc.MethodDescriptor, error) {
+	if len(protofiles) == 0 {
+		return nil, errors.New("select your proto file(s) first")
 	}
 
 	parser := protoparse.Parser{
 		Accessor: func(filename string) (io.ReadCloser, error) {
-			return ioutil.NopCloser(strings.NewReader(protofile)), nil
+			for _, f := range protofiles {
+				if strings.HasSuffix(filename, f.Name) {
+					return ioutil.NopCloser(strings.NewReader(f.Content)), nil
+				}
+			}
+			return nil, fmt.Errorf("protofile not found: %s", filename)
 		},
 	}
 
-	descriptors, err := parser.ParseFiles("doesn't matter")
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to parse proto file")
+	fnames := []string{}
+	for _, f := range protofiles {
+		fnames = append(fnames, f.Name)
+	}
+
+	descriptors := []*desc.FileDescriptor{}
+	for _, f := range protofiles {
+		descs, err := parser.ParseFiles(f.Name)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to parse proto file")
+		}
+		descriptors = append(descriptors, descs...)
 	}
 
 	methods := []*desc.MethodDescriptor{}
@@ -96,4 +130,9 @@ func listMethods(protofile string) ([]*desc.MethodDescriptor, error) {
 	}
 
 	return methods, nil
+}
+
+type FileModel struct {
+	Name    string
+	Content string
 }
