@@ -1,11 +1,15 @@
+import { FileModel } from "./storage/models";
+
 export interface Backend {
   Domain: Domain;
   Storage: Storage;
 }
 
 export interface Domain {
-  ListMethods(protofile: string): Promise<string[]>;
-  InvokeRPC(protofile: string, server: string, method: string, data: string): Promise<string>;
+  ListMethods(protofile: FileModel[]): Promise<string[]>;
+  InvokeRPC(protofile: FileModel[], server: string, method: string, data: string, metadata: Record<string, string>): Promise<string>;
+  GetExampleJSON(protofile: FileModel[], method: string): Promise<string>;
+  GetFileWithMethod(protofile: FileModel[], method: string): Promise<FileModel>;
 }
 
 export interface Storage {

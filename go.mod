@@ -10,6 +10,8 @@ require (
 	github.com/leaanthony/mewn v0.10.7
 	github.com/mitchellh/mapstructure v1.1.2
 	github.com/pkg/errors v0.8.1
+	github.com/stretchr/testify v1.4.0
 	github.com/wailsapp/wails v1.5.0
-	grpc.go4.org v0.0.0-20170609214715-11d0a25b4919
+	google.golang.org/grpc v1.8.0
+	google.golang.org/protobuf v1.23.0
 )

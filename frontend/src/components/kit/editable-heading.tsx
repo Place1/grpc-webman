@@ -25,8 +25,16 @@ export class EditableHeading extends React.Component<Props> {
       if (this.inputRef.current) {
         const node = findDOMNode(this.inputRef.current) as HTMLInputElement;
         node.focus();
+        node.select();
       }
     }, 0);
+  }
+
+  onKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === 'Enter' && this.inputRef.current) {
+      const node = findDOMNode(this.inputRef.current) as HTMLInputElement;
+      node.blur();
+    }
   }
 
   render() {
@@ -52,6 +60,7 @@ export class EditableHeading extends React.Component<Props> {
             value={this.props.value}
             onChange={(event: SyntheticEvent<HTMLInputElement>) => this.props.onChange(event.currentTarget.value)}
             onBlur={() => this.editing = false}
+            onKeyDown={this.onKeyDown}
           />
         }
       </Pane>

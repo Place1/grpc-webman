@@ -4,6 +4,7 @@ export interface Model {
 
 export interface AppModel {
   activeCollection?: string;
+  menuOpen?: boolean;
 }
 
 export interface CollectionModel extends Model {
@@ -18,6 +19,7 @@ export interface WorkspaceModel extends Model {
   server?: string;
   selectedRPC?: string;
   requestJSON?: string;
+  metadataJSON?: Record<string, string>;
 }
 
 export interface FileModel {

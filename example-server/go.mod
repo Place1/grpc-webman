@@ -5,7 +5,7 @@ go 1.13
 require (
 	github.com/desertbit/timer v0.0.0-20180107155436-c41aec40b27f // indirect
 	github.com/golang/protobuf v1.4.2
-	github.com/gorilla/handlers v1.4.2 // indirect
+	github.com/gorilla/handlers v1.4.2
 	github.com/gorilla/websocket v1.4.2 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.0
 	github.com/improbable-eng/grpc-web v0.12.0

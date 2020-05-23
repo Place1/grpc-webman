@@ -4,19 +4,14 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
-	"encoding/binary"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
-	"strconv"
-	"strings"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/jhump/protoreflect/desc"
 	"github.com/jhump/protoreflect/dynamic"
 	"github.com/pkg/errors"
-	"grpc.go4.org/codes"
 )
 
 type Client struct {
@@ -31,40 +26,48 @@ func NewClient(server string) *Client {
 	}
 }
 
-func (c *Client) InvokeRPC(ctx context.Context, method *desc.MethodDescriptor, msg proto.Message) (proto.Message, error) {
-	buf := &bytes.Buffer{}
+// i want to support both binary and text
+// but i'm struggling to decode grpc-web-text
+// responses because the returned body
+// isn't valid base64
+var usewebtext = false
 
-	b, err := proto.Marshal(msg)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to marshal proto message")
-	}
-
-	// idk why but the first byte must be 0
-	binary.Write(buf, binary.BigEndian, uint8(0))
-
-	// then the next 4 bytes must be a uint32 representing
-	// the length of the request message (big endian)
-	binary.Write(buf, binary.BigEndian, uint32(len(b)))
-
-	// then the rest of the body is the binary proto message
-	buf.Write(b)
-
+func (c *Client) InvokeRPC(ctx context.Context, method *desc.MethodDescriptor, msg proto.Message, metadata map[string]string) (proto.Message, error) {
 	// then we base64 encode the whole thing because we're
 	// using application/grpc-web-text (text means base64)
-	body := base64.StdEncoding.EncodeToString(buf.Bytes())
-	// body := "AAAAAAcKBUphbWVz"
-	// fmt.Println(body)
+	body, err := frameRequest(msg)
+	if err != nil {
+		return nil, err
+	}
+
+	if usewebtext {
+		body = []byte(base64.StdEncoding.EncodeToString(body))
+	}
 
 	url := fmt.Sprintf("%s/%s.%s/%s", c.server, method.GetService().GetFile().GetPackage(), method.GetService().GetName(), method.GetName())
-
-	req, err := http.NewRequest("POST", url, strings.NewReader(body))
+	req, err := http.NewRequest("POST", url, bytes.NewReader(body))
 	if err != nil {
 		return nil, errors.Wrap(err, "request format error")
 	}
 
+	fmt.Printf("\n\nTRACE %v\n\n\n", metadata)
+
+	if metadata != nil {
+		for k, v := range metadata {
+			if k != "" {
+				req.Header.Set(k, v)
+			}
+		}
+	}
+
+	if usewebtext {
+		req.Header.Set("accept", "application/grpc-web-text")
+		req.Header.Set("content-type", "application/grpc-web-text")
+	} else {
+		req.Header.Set("accept", "application/grpc-web")
+		req.Header.Set("content-type", "application/grpc-web")
+	}
 	req.Header.Set("X-User-Agent", "grpc-web-javcascript/0.1")
-	req.Header.Set("accept", "application/grpc-web-text")
-	req.Header.Set("content-type", "application/grpc-web-text")
 	req.Header.Set("TE", "Trailers")
 
 	res, err := c.HttpClient.Do(req)
@@ -73,15 +76,8 @@ func (c *Client) InvokeRPC(ctx context.Context, method *desc.MethodDescriptor, m
 	}
 	defer res.Body.Close()
 
-	log.Println(res.StatusCode)
-
-	if status, ok := res.Header["Grpc-Status"]; ok {
-		x, _ := strconv.Atoi(status[0])
-		fmt.Printf("status = %s\n", codes.Code(uint32(x)).String())
-	}
-
-	if message, ok := res.Header["Grpc-Message"]; ok {
-		fmt.Printf("message = %s\n", message[0])
+	if err := checkGrpcError(res); err != nil {
+		return nil, err
 	}
 
 	rbin, err := ioutil.ReadAll(res.Body)
@@ -90,8 +86,15 @@ func (c *Client) InvokeRPC(ctx context.Context, method *desc.MethodDescriptor, m
 	}
 
 	resmsg := dynamic.NewMessage(method.GetOutputType())
-	if err := UnmarshalGRPCWebText(rbin, resmsg); err != nil {
-		return nil, errors.Wrap(err, "failed to unmarshal grpc web response message")
+
+	if res.Header.Get("Content-Type") == "application/grpc-web-text" {
+		if err := UnmarshalGRPCWebText(rbin, resmsg); err != nil {
+			return nil, errors.Wrap(err, "failed to unmarshal grpc web response message")
+		}
+	} else {
+		if err := UnmarshalGRPCWeb(rbin, resmsg); err != nil {
+			return nil, errors.Wrap(err, "failed to unmarshal grpc web response message")
+		}
 	}
 
 	return resmsg, nil

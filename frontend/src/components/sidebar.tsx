@@ -1,6 +1,6 @@
+import React from 'react';
 import { Button, FolderCloseIcon, FolderOpenIcon, Heading, IconButton, Pane, Paragraph } from 'evergreen-ui';
 import { observer } from 'mobx-react';
-import React from 'react';
 import { CollectionModel } from '../storage/models';
 import { app, collections, workspaces } from '../storage/stores';
 import { Text } from './kit/text';
@@ -30,7 +30,10 @@ export class Sidebar extends React.Component {
     return (
       <Pane>
         <div>
-          <Heading padding={24} size={800}>Collections</Heading>
+          <Pane display="flex" alignItems="center">
+            <Heading padding={24} size={800}>Collections</Heading>
+            <IconButton icon="menu-open" onClick={() => app.value.menuOpen = !app.value.menuOpen} />
+          </Pane>
           {collections.all().map(collection => (
             <Pane
               key={collection.id}

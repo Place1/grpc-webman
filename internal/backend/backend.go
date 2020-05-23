@@ -15,7 +15,15 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
 	"github.com/wailsapp/wails"
+	"google.golang.org/protobuf/types/descriptorpb"
 )
+
+var marshaller = &jsonpb.Marshaler{
+	Indent:       "    ",
+	EmitDefaults: true,
+}
+
+var unmarshaller = &jsonpb.Unmarshaler{}
 
 type Domain struct {
 	runtime *wails.Runtime
@@ -49,45 +57,95 @@ func (d *Domain) ListMethods(files []interface{}) ([]string, error) {
 	return methods, nil
 }
 
-func (d *Domain) InvokeRPC(files []interface{}, server string, method string, data string) (string, error) {
+func (d *Domain) InvokeRPC(files []interface{}, server string, method string, data string, metadata map[string]interface{}) (string, error) {
+	protofiles := []*FileModel{}
+	if err := mapstructure.Decode(files, &protofiles); err != nil {
+		return "", errors.Wrap(err, "invalid argument (files)")
+	}
+
+	meta := map[string]string{}
+	if err := mapstructure.Decode(metadata, &meta); err != nil {
+		return "", errors.Wrap(err, "invalid argument (metadata)")
+	}
+
+	mdesc, err := findMethod(protofiles, method)
+	if err != nil {
+		return "", err
+	}
+
+	msg := dynamic.NewMessage(mdesc.GetInputType())
+
+	if unmarshaller.Unmarshal(strings.NewReader(data), msg); err != nil {
+		return "", errors.Wrap(err, "failed to unmarshal GRPC request message data")
+	}
+
+	client := grpcweb.NewClient(server)
+	res, err := client.InvokeRPC(context.TODO(), mdesc, msg, meta)
+	if err != nil {
+		return "", err
+	}
+
+	s, err := marshaller.MarshalToString(res)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to marshal GRPC response message")
+	}
+
+	return s, nil
+}
+
+func (d *Domain) GetExampleJSON(files []interface{}, method string) (string, error) {
 	protofiles := []*FileModel{}
 	if err := mapstructure.Decode(files, &protofiles); err != nil {
 		return "", errors.Wrap(err, "invalid argument")
 	}
 
-	methods, err := listMethods(protofiles)
+	mdesc, err := findMethod(protofiles, method)
 	if err != nil {
 		return "", err
 	}
 
-	for _, methodDescriptor := range methods {
-		if methodDescriptor.GetFullyQualifiedName() == method {
+	msg := initialize(dynamic.NewMessage(mdesc.GetInputType()))
+	result, err := marshaller.MarshalToString(msg)
+	if err != nil {
+		return "", nil
+	}
 
-			msg := dynamic.NewMessage(methodDescriptor.GetInputType())
+	return result, nil
+}
 
-			unmarshaler := &jsonpb.Unmarshaler{}
-			if unmarshaler.Unmarshal(strings.NewReader(data), msg); err != nil {
-				return "", errors.Wrap(err, "failed to unmarshal GRPC request message data")
-			}
+func (d *Domain) GetFileWithMethod(files []interface{}, method string) (*FileModel, error) {
+	protofiles := []*FileModel{}
+	if err := mapstructure.Decode(files, &protofiles); err != nil {
+		return nil, errors.Wrap(err, "invalid argument")
+	}
 
-			client := grpcweb.NewClient(server)
+	mdesc, err := findMethod(protofiles, method)
+	if err != nil {
+		return nil, err
+	}
 
-			res, err := client.InvokeRPC(context.TODO(), methodDescriptor, msg)
-			if err != nil {
-				return "", errors.Wrap(err, "failed to invoke GRPC method")
-			}
-
-			marshaler := &jsonpb.Marshaler{}
-			s, err := marshaler.MarshalToString(res)
-			if err != nil {
-				return "", errors.Wrap(err, "failed to marshal GRPC response message")
-			}
-
-			return s, nil
+	for _, f := range protofiles {
+		if f.Name == mdesc.GetFile().GetName() {
+			return f, nil
 		}
 	}
 
-	return "", errors.New("unknown GRPC method")
+	return nil, fmt.Errorf("couldn't find source file for method: %s", method)
+}
+
+func findMethod(protofiles []*FileModel, method string) (*desc.MethodDescriptor, error) {
+	methods, err := listMethods(protofiles)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, m := range methods {
+		if m.GetFullyQualifiedName() == method {
+			return m, nil
+		}
+	}
+
+	return nil, fmt.Errorf("unknown method: %s", method)
 }
 
 func listMethods(protofiles []*FileModel) ([]*desc.MethodDescriptor, error) {
@@ -133,6 +191,17 @@ func listMethods(protofiles []*FileModel) ([]*desc.MethodDescriptor, error) {
 }
 
 type FileModel struct {
-	Name    string
-	Content string
+	Name    string `json:"name"`
+	Content string `json:"content"`
+}
+
+func initialize(msg *dynamic.Message) *dynamic.Message {
+	for _, field := range msg.GetKnownFields() {
+		switch field.GetType() {
+		case descriptorpb.FieldDescriptorProto_TYPE_MESSAGE:
+			nested := initialize(dynamic.NewMessage(field.GetMessageType()))
+			msg.SetFieldByName(field.GetName(), nested)
+		}
+	}
+	return msg
 }

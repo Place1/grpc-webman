@@ -4,6 +4,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@types/react-syntax-highlighter": "11.0.4",
     "@wailsapp/runtime": "^1.0.10",
     "computed-async-mobx": "4.2.1",
     "core-js": "^3.6.4",
@@ -15,6 +16,7 @@
     "react-dom": "^16.13.0",
     "react-modal": "3.11.2",
     "react-spring": "8.0.27",
+    "react-syntax-highlighter": "12.2.1",
     "wails-react-scripts": "3.0.1-2"
   },
   "scripts": {

@@ -1,5 +1,5 @@
 import { FilePicker, FormField, IconButton, Pane, Tab, Tablist, Button, SideSheet, Heading, Table, Popover, Menu } from 'evergreen-ui';
-import { computed, observable, toJS } from 'mobx';
+import { computed, observable } from 'mobx';
 import { observer } from 'mobx-react';
 import React from 'react';
 import { domain } from '../backend';
@@ -51,7 +51,7 @@ export class Collection extends React.Component<Props> {
       return [];
     }
     try {
-      return await domain.ListMethods(toJS(this.collection.files) as any);
+      return await domain.ListMethods(this.collection.files);
     }
     catch (error) {
       this.error = error;
@@ -105,7 +105,7 @@ export class Collection extends React.Component<Props> {
           />
 
           {this.collection.files.length !== 0 &&
-            <Pane background="tint1" padding={12}>
+            <Pane background="tint1" padding={6}>
               <Button iconBefore="folder-open" appearance="minimal" onClick={() => this.showFiles = true}>
                 Files
               </Button>
@@ -119,7 +119,7 @@ export class Collection extends React.Component<Props> {
 
         {this.collection.files.length === 0 &&
           <FormField label="Proto File(s)">
-            <FilePicker width={350} onChange={this.onProtoFiles} />
+            <FilePicker width={350} multiple onChange={this.onProtoFiles} />
           </FormField>
         }
 
