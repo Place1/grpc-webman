@@ -3,8 +3,6 @@ package main
 import (
 	"grpcwebman/internal/backend"
 
-	"github.com/wailsapp/wails/cmd"
-
 	"github.com/leaanthony/mewn"
 	"github.com/wailsapp/wails"
 )
@@ -18,7 +16,7 @@ func main() {
 	// kingpin.MustParse(app.Parse(os.Args[1:]))
 
 	// if *bridge {
-	wails.BuildMode = cmd.BuildModeBridge
+	// wails.BuildMode = cmd.BuildModeBridge
 	// }
 
 	js := mewn.String("./frontend/build/static/js/main.js")
