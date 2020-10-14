@@ -112,10 +112,10 @@ export class Workspace extends React.Component<Props> {
             <FormField label="gRPC Method" isRequired flexBasis="50%" marginLeft={12}>
               <Pane display="flex">
                 <Combobox
-                  width="100%"
+                  width="480px"
                   items={this.props.methods}
                   selectedItem={this.workspace.selectedRPC || ''}
-                  onChange={selected => this.workspace.selectedRPC = selected}
+                  onChange={selected => this.selectRPC(selected)}
                   placeholder="Select gRPC"
                 />
                 <Button
@@ -148,15 +148,15 @@ export class Workspace extends React.Component<Props> {
         {this.workspace.selectedRPC &&
           <Pane display="flex" flexDirection="column" background="tint1" padding={12} marginBottom={12}>
             <FormField label="Request Message" flex={1} marginBottom={12}>
+              <Button appearance="primary" height={28} onClick={this.setDefaultMessage}>
+                Set Default Value
+              </Button>
               <Textarea
                 rows={10}
                 value={this.workspace.requestJSON}
                 onChange={(event: SyntheticEvent<HTMLTextAreaElement>) => this.workspace.requestJSON = event.currentTarget.value}
               />
             </FormField>
-            <Button appearance="minimal" height={28} onClick={this.setDefaultMessage}>
-              Reset To Default
-            </Button>
           </Pane>
         }
 

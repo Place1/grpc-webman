@@ -11,7 +11,7 @@ require (
 	github.com/mitchellh/mapstructure v1.1.2
 	github.com/pkg/errors v0.8.1
 	github.com/stretchr/testify v1.4.0
-	github.com/wailsapp/wails v1.5.0
+	github.com/wailsapp/wails v1.8.0
 	google.golang.org/grpc v1.8.0
 	google.golang.org/protobuf v1.23.0
 )

@@ -5,7 +5,7 @@
   "private": true,
   "dependencies": {
     "@types/react-syntax-highlighter": "11.0.4",
-    "@wailsapp/runtime": "^1.0.10",
+    "@wailsapp/runtime": "1.1.1",
     "computed-async-mobx": "4.2.1",
     "core-js": "^3.6.4",
     "evergreen-ui": "4.27.4",

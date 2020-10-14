@@ -3,7 +3,6 @@ package main
 import (
 	"grpcwebman/internal/backend"
 
-	"github.com/leaanthony/mewn"
 	"github.com/wailsapp/wails"
 )
 
@@ -19,15 +18,15 @@ func main() {
 	// wails.BuildMode = cmd.BuildModeBridge
 	// }
 
-	js := mewn.String("./frontend/build/static/js/main.js")
-	css := mewn.String("./frontend/build/static/css/main.css")
+	// js := mewn.String("./frontend/build/static/js/main.js")
+	// css := mewn.String("./frontend/build/static/css/main.css")
 
 	app := wails.CreateApp(&wails.AppConfig{
-		Width:     1024,
-		Height:    768,
-		Title:     "My Project",
-		JS:        js,
-		CSS:       css,
+		Width:  1024,
+		Height: 768,
+		Title:  "My Project",
+		// JS:        js,
+		// CSS:       css,
 		Resizable: true,
 	})
 
