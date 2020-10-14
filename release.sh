@@ -4,7 +4,8 @@ set -eou pipefail
 REPO="grpc-webman"
 
 if ! [ -x "$(command -v github-release)" ]; then
-  echo 'please install github-release using "go get github.com/aktau/github-release"'
+  echo 'please install github-release using "go get github.com/aktau/github-release@v0.8.1"'
+  exit 1
 fi
 
 if [[ -z "$GITHUB_TOKEN" ]]; then
